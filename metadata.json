@@ -1,0 +1,6 @@
+{
+  "name": "EuroSport Pulse",
+  "description": "Avrupa spor basınını (Marca, L'Equipe, Gazzetta, Kicker) takip eden, kelime bazlı haber analizi ve AI destekli özetleme otomasyonu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
