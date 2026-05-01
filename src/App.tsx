@@ -66,12 +66,20 @@ export default function App() {
     try {
       const response = await fetch(`/api/news${selectedSource !== 'all' ? `?source=${selectedSource}` : ''}`);
       const data = await response.json();
+      
+      if (data.error && (!data.items || data.items.length === 0)) {
+        toast.error(`Kaynak hatası: ${data.details || data.error}`);
+      } else if (data.items && data.items.length === 0) {
+        toast.info('Yeni haber bulunamadı');
+      } else {
+        toast.success(data.error ? 'Kısmi haber akışı yüklendi' : 'Haberler güncellendi');
+      }
+      
       setNews(data.items || []);
       setLastUpdated(new Date());
-      toast.success('Haberler güncellendi');
     } catch (error) {
       console.error('Fetch error:', error);
-      toast.error('Haberler alınamadı');
+      toast.error('Haber sunucusuna erişilemedi');
     } finally {
       setLoading(false);
     }

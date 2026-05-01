@@ -19,12 +19,12 @@ const app = express();
 app.use(express.json());
 
 const feeds: Record<string, string> = {
-  marca: "https://e00-marca.uecdn.es/rss/futbol.xml",
+  marca: "https://news.google.com/rss/search?q=site:marca.com+%22futbol%22&hl=es&gl=ES&ceid=ES:es",
   as: "https://news.google.com/rss/search?q=site:as.com+%22football%22+OR+%22futbol%22&hl=es&gl=ES&ceid=ES:es",
   lequipe: "https://news.google.com/rss/search?q=site:lequipe.fr+%22football%22&hl=fr&gl=FR&ceid=FR:fr",
   gazzetta: "https://news.google.com/rss/search?q=site:gazzetta.it+%22calcio%22&hl=it&gl=IT&ceid=IT:it",
   kicker: "https://newsfeed.kicker.de/news/aktuell",
-  bbc: "https://feeds.bbci.co.uk/sport/football/rss.xml",
+  bbc: "https://news.google.com/rss/search?q=site:bbc.com/sport/football&hl=en&gl=GB&ceid=GB:en",
 };
 
 const sourceDisplayNames: Record<string, string> = {
@@ -50,7 +50,8 @@ app.get("/api/news", async (req, res) => {
       return res.json({ ...feed, items: mappedItems });
     } catch (error: any) {
       console.error(`Error fetching ${source}:`, error.message);
-      return res.status(500).json({ error: "Failed to fetch feed", details: error.message });
+      // Fallback for individual source fail
+      return res.json({ items: [], error: error.message });
     }
   }
 
@@ -64,20 +65,26 @@ app.get("/api/news", async (req, res) => {
           sourceName: sourceDisplayNames[name] || name.toUpperCase(),
         }));
       } catch (e: any) {
-        console.warn(`Failed to fetch ${name}:`, e.message);
+        console.error(`Failed to fetch ${name} (${url}):`, e.message);
         return [];
       }
     });
 
-    // Wait for all OR timeout after 8 seconds
     const results = await Promise.all(fetchPromises);
     const allItems = results.flat().sort((a, b) => {
-      return new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime();
+      const dateA = new Date(a.pubDate || 0).getTime();
+      const dateB = new Date(b.pubDate || 0).getTime();
+      return dateB - dateA;
     });
 
-    res.json({ items: allItems });
+    if (allItems.length === 0) {
+      console.warn("No articles found across all feeds");
+    }
+
+    res.json({ items: allItems.slice(0, 100) }); // Limit for stability
   } catch (error: any) {
-    res.status(500).json({ error: "Failed to aggregate feeds", details: error.message });
+    console.error("Aggregation error:", error);
+    res.status(500).json({ error: "Failed to aggregate feeds", details: error.message, items: [] });
   }
 });
 
