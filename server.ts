@@ -3,19 +3,21 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import Parser from "rss-parser";
 import { fileURLToPath } from 'url';
+import cors from "cors";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const parser = new Parser({
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     'Accept': 'application/rss+xml, application/xml, text/xml, */*'
   },
-  timeout: 5000
+  timeout: 10000
 });
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const feeds: Record<string, string> = {
@@ -23,7 +25,7 @@ const feeds: Record<string, string> = {
   as: "https://news.google.com/rss/search?q=site:as.com+%22football%22+OR+%22futbol%22&hl=es&gl=ES&ceid=ES:es",
   lequipe: "https://news.google.com/rss/search?q=site:lequipe.fr+%22football%22&hl=fr&gl=FR&ceid=FR:fr",
   gazzetta: "https://news.google.com/rss/search?q=site:gazzetta.it+%22calcio%22&hl=it&gl=IT&ceid=IT:it",
-  kicker: "https://newsfeed.kicker.de/news/aktuell",
+  kicker: "https://news.google.com/rss/search?q=site:kicker.de+%22fussball%22&hl=de&gl=DE&ceid=DE:de",
   bbc: "https://news.google.com/rss/search?q=site:bbc.com/sport/football&hl=en&gl=GB&ceid=GB:en",
 };
 
@@ -47,15 +49,14 @@ app.get("/api/news", async (req, res) => {
         ...item,
         sourceName: sourceDisplayNames[source as string] || (source as string).toUpperCase(),
       }));
-      return res.json({ ...feed, items: mappedItems });
+      return res.json({ items: mappedItems });
     } catch (error: any) {
       console.error(`Error fetching ${source}:`, error.message);
-      // Fallback for individual source fail
       return res.json({ items: [], error: error.message });
     }
   }
 
-  // Aggregate with a total timeout to prevent serverless function timeout
+  // Aggregate
   try {
     const fetchPromises = Object.entries(feeds).map(async ([name, url]) => {
       try {
@@ -65,7 +66,7 @@ app.get("/api/news", async (req, res) => {
           sourceName: sourceDisplayNames[name] || name.toUpperCase(),
         }));
       } catch (e: any) {
-        console.error(`Failed to fetch ${name} (${url}):`, e.message);
+        console.error(`Failed to fetch ${name}:`, e.message);
         return [];
       }
     });
@@ -77,14 +78,10 @@ app.get("/api/news", async (req, res) => {
       return dateB - dateA;
     });
 
-    if (allItems.length === 0) {
-      console.warn("No articles found across all feeds");
-    }
-
-    res.json({ items: allItems.slice(0, 100) }); // Limit for stability
+    res.json({ items: allItems.slice(0, 100) });
   } catch (error: any) {
     console.error("Aggregation error:", error);
-    res.status(500).json({ error: "Failed to aggregate feeds", details: error.message, items: [] });
+    res.status(500).json({ error: "Failed to fetch news", items: [] });
   }
 });
 
@@ -92,36 +89,30 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-async function setupApp() {
-  const isProd = process.env.NODE_ENV === "production" || process.env.VITE_PROD === "true" || !!process.env.VERCEL;
-  
-  if (!isProd) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    // On Vercel, static files are handled by the platform, but this allows it to work in other prod envs
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath, { index: false }));
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith('/api')) return next();
-      res.sendFile(path.join(distPath, "index.html"), (err) => {
-        if (err) next();
-      });
-    });
-  }
+const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 
-  // Only listen if explicitly told to or if not on Vercel
-  if (!process.env.VERCEL) {
-    const PORT = 3000;
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+if (!isProd) {
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: "spa",
+  });
+  app.use(vite.middlewares);
+} else {
+  const distPath = path.join(process.cwd(), "dist");
+  app.use(express.static(distPath, { index: false }));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distPath, "index.html"), (err) => {
+      if (err) next();
     });
-  }
+  });
 }
 
-setupApp();
+const PORT = 3000;
+if (!process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;
