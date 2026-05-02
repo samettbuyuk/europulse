@@ -24,17 +24,17 @@ const feeds: Record<string, string> = {
   goal: "https://news.google.com/rss/search?q=Goal.com+football&hl=en-US&gl=US&ceid=US:en",
   bbc: "https://news.google.com/rss/search?q=BBC+Sport+football&hl=en-GB&gl=GB&ceid=GB:en",
   skysports: "https://news.google.com/rss/search?q=Sky+Sports+football&hl=en-GB&gl=GB&ceid=GB:en",
-  lequipe: "https://news.google.com/rss/search?q=site:lequipe.fr+%22football%22&hl=fr&gl=FR&ceid=FR:fr",
-  marca: "https://news.google.com/rss/search?q=site:marca.com+%22football%22+OR+%22futbol%22&hl=es&gl=ES&ceid=ES:es",
-  gazzetta: "https://news.google.com/rss/search?q=site:gazzetta.it+%22calcio%22&hl=it&gl=IT&ceid=IT:it",
-  kicker: "https://news.google.com/rss/search?q=site:kicker.de+%22fussball%22&hl=de&gl=DE&ceid=DE:de",
+  lequipe: "https://news.google.com/rss/search?q=L'Equipe+football&hl=fr&gl=FR&ceid=FR:fr",
+  marca: "https://news.google.com/rss/search?q=Marca+futbol&hl=es&gl=ES&ceid=ES:es",
+  gazzetta: "https://news.google.com/rss/search?q=Gazzetta+dello+Sport+calcio&hl=it&gl=IT&ceid=IT:it",
+  kicker: "https://news.google.com/rss/search?q=Kicker+fussball&hl=de&gl=DE&ceid=DE:de",
   espn: "https://news.google.com/rss/search?q=ESPN+soccer&hl=en-US&gl=US&ceid=US:en",
   guardian: "https://news.google.com/rss/search?q=The+Guardian+football&hl=en-GB&gl=GB&ceid=GB:en",
   "90min": "https://news.google.com/rss/search?q=90min+football&hl=en-US&gl=US&ceid=US:en",
   eurosport: "https://news.google.com/rss/search?q=Eurosport+football&hl=en-GB&gl=GB&ceid=GB:en",
   bleacher: "https://news.google.com/rss/search?q=Bleacher+Report+football&hl=en-US&gl=US&ceid=US:en",
   athletic: "https://news.google.com/rss/search?q=The+Athletic+football&hl=en-US&gl=US&ceid=US:en",
-  as: "https://news.google.com/rss/search?q=site:as.com+%22football%22+OR+%22futbol%22&hl=es&gl=ES&ceid=ES:es",
+  as: "https://news.google.com/rss/search?q=Diario+AS+futbol&hl=es&gl=ES&ceid=ES:es",
 };
 
 const sourceDisplayNames: Record<string, string> = {

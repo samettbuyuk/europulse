@@ -22,8 +22,8 @@ export default function App() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [keywords, setKeywords] = useState<string[]>(['Transfer', 'Galatasaray', 'Champions League']);
-  const [activeKeyword, setActiveKeyword] = useState<string | null>('Transfer');
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [view, setView] = useState('grid');
