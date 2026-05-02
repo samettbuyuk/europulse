@@ -53,12 +53,20 @@ export default function App() {
 
   const sources = [
     { id: 'all', name: 'Tümü', flag: '🌐' },
-    { id: 'marca', name: 'Marca', flag: '🇪🇸' },
-    { id: 'as', name: 'AS', flag: '🇪🇸' },
+    { id: 'goal', name: 'Goal.com', flag: '🌎' },
+    { id: 'bbc', name: 'BBC Sport', flag: '🇬🇧' },
+    { id: 'skysports', name: 'Sky Sports', flag: '🇬🇧' },
     { id: 'lequipe', name: "L'Equipe", flag: '🇫🇷' },
-    { id: 'gazzetta', name: 'Gazzetta', flag: '🇮🇹' },
+    { id: 'marca', name: 'Marca', flag: '🇪🇸' },
+    { id: 'gazzetta', name: 'La Gazzetta', flag: '🇮🇹' },
     { id: 'kicker', name: 'Kicker', flag: '🇩🇪' },
-    { id: 'bbc', name: 'BBC', flag: '🇬🇧' },
+    { id: 'espn', name: 'ESPN', flag: '🇺🇸' },
+    { id: 'guardian', name: 'The Guardian', flag: '🇬🇧' },
+    { id: '90min', name: '90min', flag: '🌎' },
+    { id: 'eurosport', name: 'Eurosport', flag: '🇪🇺' },
+    { id: 'bleacher', name: 'Bleacher Report', flag: '🇺🇸' },
+    { id: 'athletic', name: 'The Athletic', flag: '🇬🇧' },
+    { id: 'as', name: 'AS', flag: '🇪🇸' },
   ];
 
   const fetchNews = async () => {
