@@ -97,19 +97,15 @@ export default function App() {
   }, [selectedSource]);
 
   const filteredNews = useMemo(() => {
-    const now = new Date();
-    const threeDaysAgo = new Date(now);
-    threeDaysAgo.setDate(now.getDate() - 3);
-
-    let filtered = news.filter(item => {
-      const itemDate = new Date(item.pubDate);
-      return itemDate >= threeDaysAgo;
-    });
+    // Initial news should be all fetched news
+    let filtered = [...news];
 
     if (activeKeyword) {
+      const search = activeKeyword.toLowerCase();
       filtered = filtered.filter(item => 
-        item.title.toLowerCase().includes(activeKeyword.toLowerCase()) || 
-        item.contentSnippet.toLowerCase().includes(activeKeyword.toLowerCase())
+        (item.title?.toLowerCase() || '').includes(search) || 
+        (item.contentSnippet?.toLowerCase() || '').includes(search) ||
+        (item.content?.toLowerCase() || '').includes(search)
       );
     }
     
@@ -469,24 +465,47 @@ export default function App() {
           {/* Stats Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 shrink-0">
             <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Eşleşen Haberler</p>
-              <p className="text-4xl font-light tracking-tighter">
-                {filteredNews.length} 
-                <span className="text-sm text-green-500 font-bold ml-2">LIVE</span>
+              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Haber Akışı</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-4xl font-light tracking-tighter">
+                  {filteredNews.length}
+                </p>
+                <span className="text-xs text-gray-400 dark:text-zinc-500 font-medium">/{news.length}</span>
+              </div>
+              <div className="text-[10px] text-green-500 font-bold mt-2 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                {selectedSource === 'all' ? 'TÜM KAYNAKLAR' : sources.find(s => s.id === selectedSource)?.name.toUpperCase()}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Görünüm Filtresi</p>
+              <div className="flex items-center gap-2">
+                <p className="text-4xl font-light truncate max-w-[200px]">
+                  {activeKeyword || 'TÜMÜ'}
+                </p>
+                {activeKeyword && (
+                  <Badge variant="outline" className="text-[8px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-100 dark:border-blue-800">
+                    AKTİF
+                  </Badge>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-medium mt-2">
+                {selectedSource === 'all' ? 'Tüm kaynaklar taranıyor' : `${sources.find(s => s.id === selectedSource)?.name} kaynağından`}
               </p>
             </div>
             <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Aktif Filtre</p>
-              <p className="text-4xl font-light truncate underline decoration-blue-500 decoration-4 underline-offset-8">
-                {activeKeyword || 'TÜMÜ'}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Kaynak Çeşitliliği</p>
-              <p className="text-4xl font-light tracking-tighter">
-                {new Set(filteredNews.map(n => n.sourceName)).size}
-                <span className="text-sm text-gray-400 dark:text-zinc-500 font-normal ml-2">Gazete</span>
-              </p>
+              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">Kaynak Dağılımı</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-4xl font-light tracking-tighter">
+                  {new Set(filteredNews.map(n => n.sourceName)).size}
+                </p>
+                <span className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Aktif Kanal</span>
+              </div>
+              <div className="flex gap-1 mt-3">
+                {Array.from(new Set(news.map(n => n.sourceName))).slice(0, 6).map((src, i) => (
+                   <div key={i} className="w-1 h-3 rounded-full bg-blue-500/30" />
+                ))}
+              </div>
             </div>
           </div>
 

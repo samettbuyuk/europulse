@@ -40,24 +40,24 @@ const sourceDisplayNames: Record<string, string> = {
 
 // RSS Proxy Endpoint
 app.get("/api/news", async (req, res) => {
-  const { source } = req.query;
-
-  if (source && feeds[source as string]) {
-    try {
-      const feed = await parser.parseURL(feeds[source as string]);
-      const mappedItems = feed.items.map(item => ({
-        ...item,
-        sourceName: sourceDisplayNames[source as string] || (source as string).toUpperCase(),
-      }));
-      return res.json({ items: mappedItems });
-    } catch (error: any) {
-      console.error(`Error fetching ${source}:`, error.message);
-      return res.json({ items: [], error: error.message });
-    }
-  }
-
-  // Aggregate
   try {
+    const { source } = req.query;
+
+    if (source && feeds[source as string]) {
+      try {
+        const feed = await parser.parseURL(feeds[source as string]);
+        const mappedItems = feed.items.map(item => ({
+          ...item,
+          sourceName: sourceDisplayNames[source as string] || (source as string).toUpperCase(),
+        }));
+        return res.json({ items: mappedItems });
+      } catch (error: any) {
+        console.error(`Error fetching individual source ${source}:`, error.message);
+        return res.json({ items: [], error: `Kaynak hatası: ${error.message}` });
+      }
+    }
+
+    // Aggregate
     const fetchPromises = Object.entries(feeds).map(async ([name, url]) => {
       try {
         const feed = await parser.parseURL(url);
@@ -79,9 +79,9 @@ app.get("/api/news", async (req, res) => {
     });
 
     res.json({ items: allItems.slice(0, 100) });
-  } catch (error: any) {
-    console.error("Aggregation error:", error);
-    res.status(500).json({ error: "Failed to fetch news", items: [] });
+  } catch (globalError: any) {
+    console.error("Aggregation error:", globalError);
+    res.json({ items: [], error: "Haber servisi hatası", details: globalError.message });
   }
 });
 

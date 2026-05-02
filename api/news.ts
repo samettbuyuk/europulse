@@ -29,65 +29,49 @@ const sourceDisplayNames: Record<string, string> = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Add CORS headers manually just in case
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  try {
+    // Add CORS headers
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+    if (req.method === 'OPTIONS') {
+      res.status(200).end();
+      return;
+    }
 
-  const { source } = req.query;
+    const { source } = req.query;
 
-  if (source && feeds[source as string]) {
-    let attempts = 0;
-    const maxAttempts = 2;
-    while (attempts < maxAttempts) {
+    if (source && feeds[source as string]) {
       try {
         const feed = await parser.parseURL(feeds[source as string]);
         const mappedItems = feed.items.map(item => ({
           ...item,
           sourceName: sourceDisplayNames[source as string] || (source as string).toUpperCase(),
         }));
-        return res.json({ items: mappedItems });
+        return res.status(200).json({ items: mappedItems });
       } catch (error: any) {
-        attempts++;
-        if (attempts === maxAttempts) {
-          console.error(`Error fetching ${source}:`, error.message);
-          return res.json({ items: [], error: error.message });
-        }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.error(`Error fetching individual source ${source}:`, error.message);
+        return res.status(200).json({ items: [], error: `Kaynak hatası: ${error.message}` });
       }
     }
-  }
 
-  try {
+    // Parallel fetch with individual timeouts/errors handled
     const fetchPromises = Object.entries(feeds).map(async ([name, url]): Promise<any[]> => {
-      let attempts = 0;
-      const maxAttempts = 2;
-      while (attempts < maxAttempts) {
-        try {
-          const feed = await parser.parseURL(url);
-          return feed.items.map(item => ({
-            ...item,
-            sourceName: sourceDisplayNames[name] || name.toUpperCase(),
-          }));
-        } catch (e: any) {
-          attempts++;
-          if (attempts === maxAttempts) {
-            console.error(`Failed to fetch ${name} after ${maxAttempts} attempts:`, e.message);
-            return [];
-          }
-          await new Promise(resolve => setTimeout(resolve, 500)); // Short wait between retries
-        }
+      try {
+        const feed = await parser.parseURL(url);
+        return feed.items.map(item => ({
+          ...item,
+          sourceName: sourceDisplayNames[name] || name.toUpperCase(),
+        }));
+      } catch (e: any) {
+        console.warn(`Failed to fetch ${name}:`, e.message);
+        return [];
       }
-      return [];
     });
 
     const results = await Promise.all(fetchPromises);
@@ -97,9 +81,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return dateB - dateA;
     });
 
-    res.json({ items: allItems.slice(0, 100) });
-  } catch (error: any) {
-    console.error("Aggregation error:", error);
-    res.status(500).json({ error: "Failed to fetch news", items: [] });
+    return res.status(200).json({ items: allItems.slice(0, 100) });
+  } catch (globalError: any) {
+    console.error("Critical API error:", globalError);
+    return res.status(200).json({ 
+      items: [], 
+      error: "Haber servisi geçici olarak ulaşılamaz durumda.",
+      details: globalError.message 
+    });
   }
 }
